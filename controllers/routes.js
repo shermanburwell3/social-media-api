@@ -60,3 +60,40 @@ router.delete('/:id', async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 });
+
+// POST to add a new friend to a user's friend list
+router.post('/:userId/friends/:friendId', async (req, res) => {
+    try {
+        // Add friendId to the user's friends array
+        const user = await User.findByIdAndUpdate(
+            req.params.userId,
+            { $addToSet: { friends: req.params.friendId } }, // Use $addToSet to avoid duplicates
+            { new: true }
+        );
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.status(200).json(user);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// DELETE to remove a friend from a user's friend list
+router.delete('/:userId/friends/:friendId', async (req, res) => {
+    try {
+        // Remove friendId from the user's friends array
+        const user = await User.findByIdAndUpdate(
+            req.params.userId,
+            { $pull: { friends: req.params.friendId } }, // Use $pull to remove the friend
+            { new: true }
+        );
+
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        res.status(200).json(user);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+//THOUGHTS ROUTES BELOW
+

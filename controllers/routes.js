@@ -97,3 +97,102 @@ router.delete('/:userId/friends/:friendId', async (req, res) => {
 
 //THOUGHTS ROUTES BELOW
 
+// GET to get all thoughts
+router.get('/', async (req, res) => {
+    try {
+        const thoughts = await Thought.find();
+        res.status(200).json(thoughts);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// GET to get a single thought by its _id
+router.get('/:id', async (req, res) => {
+    try {
+        const thought = await Thought.findById(req.params.id);
+        if (!thought) return res.status(404).json({ message: 'Thought not found' });
+        res.status(200).json(thought);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// POST to create a new thought
+router.post('/', async (req, res) => {
+    const thought = new Thought({
+        thoughtText: req.body.thoughtText,
+        username: req.body.username,
+        userId: req.body.userId
+    });
+
+    try {
+        const newThought = await thought.save();
+
+        // Push the created thought's _id to the associated user's thoughts array
+        await User.findByIdAndUpdate(req.body.userId, { $push: { thoughts: newThought._id } });
+
+        res.status(201).json(newThought);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// PUT to update a thought by its _id
+router.put('/:id', async (req, res) => {
+    try {
+        const updatedThought = await Thought.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedThought) return res.status(404).json({ message: 'Thought not found' });
+        res.status(200).json(updatedThought);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// DELETE to remove a thought by its _id
+router.delete('/:id', async (req, res) => {
+    try {
+        const deletedThought = await Thought.findByIdAndDelete(req.params.id);
+        if (!deletedThought) return res.status(404).json({ message: 'Thought not found' });
+        res.status(204).send();
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// POST to create a reaction stored in a single thought's reactions array field
+router.post('/:thoughtId/reactions', async (req, res) => {
+    const reaction = {
+        reactionBody: req.body.reactionBody,
+        username: req.body.username
+    };
+
+    try {
+        const thought = await Thought.findByIdAndUpdate(
+            req.params.thoughtId,
+            { $push: { reactions: reaction } },
+            { new: true }
+        );
+
+        if (!thought) return res.status(404).json({ message: 'Thought not found' });
+        res.status(201).json(thought);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// DELETE to pull and remove a reaction by the reaction's reactionId value
+router.delete('/:thoughtId/reactions/:reactionId', async (req, res) => {
+    try {
+        const thought = await Thought.findByIdAndUpdate(
+            req.params.thoughtId,
+            { $pull: { reactions: { reactionId: req.params.reactionId } } },
+            { new: true }
+        );
+
+        if (!thought) return res.status(404).json({ message: 'Thought not found' });
+        res.status(200).json(thought);
+    } catch (err) {
+        res.status(400).json({ message: err.message });
+    }
+});

@@ -192,7 +192,16 @@ router.delete('/thoughts/:thoughtId/reactions/:reactionId', async (req, res) => 
             { new: true }
         );
 
-        if (!thought) return res.status(404).json({ message: 'Thought not found' });
+        if (!thought) {
+            return res.status(404).json({ message: 'Thought not found' });
+        }
+
+        // Check if the reaction was actually removed
+        const reactionRemoved = thought.reactions.find(reaction => reaction.reactionId === req.params.reactionId);
+        if (reactionRemoved) {
+            return res.status(404).json({ message: 'Reaction not found' });
+        }
+
         res.status(200).json(thought);
     } catch (err) {
         res.status(400).json({ message: err.message });

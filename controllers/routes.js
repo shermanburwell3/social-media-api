@@ -100,9 +100,11 @@ router.delete('/:userId/friends/:friendId', async (req, res) => {
 // GET to get all thoughts
 router.get('/thoughts', async (req, res) => {
     try {
+        console.log("Finding thoughts...");
         const thoughts = await Thought.find();
         res.status(200).json(thoughts);
     } catch (err) {
+        console.log(err.message);
         res.status(500).json({ message: err.message });
     }
 });
